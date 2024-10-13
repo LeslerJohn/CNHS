@@ -1,0 +1,185 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  firstName    String    
+  lastName     String    
+  middleName   String?   
+  dateOfBirth  DateTime
+  gender       String    
+  address      String   
+  contactNumber String  
+  email        String    @unique
+  password     String    
+  isAdmin      Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  Session      Session[]     
+  Teacher      Teacher?
+  Student      Student?
+}
+
+model Session {
+  id          String   @id
+  userId      Int
+  expiresAt   DateTime
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Room {
+  id          Int       @id @default(autoincrement())
+  roomNumber  String    @unique 
+  building    String?   
+  capacity    Int       
+
+  Sections    Section[]
+}
+
+model Strand {
+  id          Int       @id @default(autoincrement())
+  name        String    
+  description String?
+
+  Sections    Section[]
+}
+
+model Teacher {
+  id           Int        @id
+  position     String?   
+  employeeId   String     @unique
+  user         User?      @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  Sections     Section[] 
+  Schedules    Schedule[]
+
+  departments  TeacherOnDepartments[] 
+}
+
+model Department {
+  id             Int       @id @default(autoincrement())
+  name           String   
+  description    String?   
+
+  teachers      TeacherOnDepartments[] 
+}
+
+model GovernmentProgram {
+  id              Int       @id @default(autoincrement())
+  name            String    
+  description     String?   
+
+  students        StudentOnPrograms[]
+}
+
+model Section {
+  id          Int       @id @default(autoincrement())
+  name        String    
+  yearLevel   Int       
+  strandID    Int?      
+  roomID      Int?      
+  adviserID   Int?      
+  strand      Strand?   @relation(fields: [strandID], references: [id], onDelete: SetNull)
+  room        Room?     @relation(fields: [roomID], references: [id], onDelete: SetNull)
+  teacher     Teacher?  @relation(fields: [adviserID], references: [id], onDelete: SetNull)
+
+  Students     Student[]
+  Schedules    Schedule[]
+  subjects     SubjectonSections[]
+} 
+
+model Student {
+  id               Int       @id
+  guardianName     String?   
+  enrollmentDate   DateTime  @default(now())
+  sectionID        Int?      
+  strandID         Int?      
+  lrn              String    @unique
+  section          Section?  @relation(fields: [sectionID], references: [id], onDelete: SetNull)
+
+  user             User      @relation(fields: [id], references: [id], onDelete: Cascade)
+  grades           Grade[]
+
+  governmentPrograms StudentOnPrograms[]
+}
+
+model Subject {
+  id          Int       @id @default(autoincrement())
+  name        String    
+  description String?      
+  gradeLevel  Int?       
+
+  Schedules   Schedule[]
+  Grade       Grade[]
+  sections    SubjectonSections[]
+}
+
+model TeacherOnDepartments {
+  teacherId    Int
+  departmentId Int
+
+  teacher      Teacher    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@id([teacherId, departmentId])  
+}
+
+model StudentOnPrograms {
+  studentId    Int
+  programId    Int
+
+  student      Student                @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  governmentProgram GovernmentProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, programId]) 
+}
+
+model SubjectonSections {
+  subjectId   Int
+  sectionId   Int
+
+  subject     Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  section     Section      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@id([subjectId, sectionId])
+}
+
+model Schedule {
+  id         Int       @id @default(autoincrement())
+  subjectID  Int       
+  teacherID  Int?      
+  sectionID  Int       
+  dayOfWeek  String    
+  startTime  DateTime
+  endTime    DateTime
+
+  subject    Subject?  @relation(fields: [subjectID], references: [id], onDelete: Cascade)
+  teacher    Teacher?  @relation(fields: [teacherID], references: [id], onDelete: SetNull)
+  section    Section?  @relation(fields: [sectionID], references: [id], onDelete: Cascade)
+}
+
+model Grade {
+  id         Int       @id @default(autoincrement())
+  studentID  Int       
+  subjectID  Int       
+  term       String    
+  grade      Float     
+  remarks    String?
+
+  student    Student?  @relation(fields: [studentID], references: [id], onDelete: Cascade)
+  subject    Subject?  @relation(fields: [subjectID], references: [id], onDelete: Cascade)
+}
