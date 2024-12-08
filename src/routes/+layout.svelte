@@ -26,6 +26,7 @@
 		padding: 1rem;
 		width: 100%;
 		box-sizing: border-box;
+		margin-top: 4rem;
 	}
 
 	footer {

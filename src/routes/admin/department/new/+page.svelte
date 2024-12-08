@@ -6,5 +6,5 @@
 	export let data: PageData;
 	
 </script>
-<h1>Hello</h1>
+
 <DepartmentForm data={data.form} />

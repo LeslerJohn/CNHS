@@ -5,4 +5,4 @@
 	export let data: PageData;
 </script>
 
-<SectionForm data={data.form} rooms={data.rooms} strands={data.strands} advisers={data.advisers} />
+<SectionForm data={data.form} rooms={data.rooms} advisers={data.advisers} />

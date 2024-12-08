@@ -4,6 +4,8 @@ import { teacherFormSchema } from '$lib/components/custom/forms/teacher-form/sch
 import type { Actions } from '../$types';
 import { zod } from 'sveltekit-superforms/adapters';
 import { redirect, fail } from '@sveltejs/kit';
+import { Argon2id } from "oslo/password";
+import { lucia } from '$lib/server/auth.js';
 
 const prisma = new PrismaClient();
 
@@ -33,9 +35,12 @@ export const actions: Actions = {
 		const position = formData.get('position')?.toString() || '';
 		const dateOfBirth = formData.get('dateOfBirth')?.toString() || '';
 		const departmentsString = formData.get('departments')?.toString() || '[]';
+		const isActive = formData.get('isActive')?.toString() === 'true';
 
 		console.log('Departments String:', departmentsString);
 		console.log('Date Of Birth:', dateOfBirth);
+
+		const hashedPassword = await new Argon2id().hash(password);
 
 		// Parse departments from comma-separated string to an array of numbers
 		let departments: number[] = [];
@@ -57,7 +62,8 @@ export const actions: Actions = {
 			address,
 			password,
 			position,
-			departments 
+			departments,
+			isActive 
 		});
 
 		console.log(validation);
@@ -70,19 +76,21 @@ export const actions: Actions = {
 			};
 		}
 
+		let teacherId;
+
 		try {
 			const newUser = await prisma.user.create({
 				data: {
 					firstName,
 					lastName,
-					middleName: middleName || null, // Optional field
+					middleName: middleName || null,
 					email,
 					dateOfBirth: new Date(dateOfBirth), // Ensure this is a Date object
 					gender,
 					contactNumber,
 					address,
-					password, // Use hashedPassword instead in a real app
-					isAdmin: false, // Assuming this is for non-admin user creation
+					password: hashedPassword, 
+					isAdmin: false,
 				},
 			});
 
@@ -94,6 +102,7 @@ export const actions: Actions = {
 					id: newUser.id, // Linking teacher to user
 					position: position || null,
 					employeeId,
+					isActive,
 				},
 			});
 
@@ -112,10 +121,8 @@ export const actions: Actions = {
 				)
 			);
 
+			teacherId = newTeacher.id
 			console.log(newTeacher);
-
-			// Redirect or show success message after successful creation
-			throw redirect(303, `/teachers/${newTeacher.id}`);
 		} catch (error) {
 			console.error('Error creating teacher:', error);
 			// Return a 500 error if something goes wrong
@@ -124,5 +131,6 @@ export const actions: Actions = {
 				error: 'Failed to create a new teacher. Please try again later.',
 			});
 		}
+		throw redirect(303, `../teacher/${teacherId}`);
 	},
 };

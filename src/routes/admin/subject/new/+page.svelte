@@ -5,5 +5,5 @@
 
 	export let data: PageData;
 </script>
-<h1>Hello</h1>
+
 <SubjectForm data={data.form} />

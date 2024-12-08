@@ -9,9 +9,29 @@ export const load: LayoutServerLoad = async ({ params }) => {
 		where: { id: programId }
 	});
 
+	const students = await prisma.studentOnPrograms.findMany({
+		where: {
+			programId: programId
+		},
+		include: {
+			student: {
+				select: {
+					user: {
+						select: {
+							firstName: true,
+							middleName: true,
+							lastName: true,
+						}
+					},
+					lrn: true
+				}
+			}
+		}
+	});
+
 	if (program === null) {
 		error(404, { message: 'Program not found' });
 	}
 
-	return { program };
+	return { program, students };
 };

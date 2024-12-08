@@ -50,30 +50,30 @@ model Room {
   Sections    Section[]
 }
 
-model Strand {
-  id          Int       @id @default(autoincrement())
-  name        String    
-  description String?
+// model Strand {
+//   id          Int       @id @default(autoincrement())
+//   name        String    
+//   description String?
 
-  Sections    Section[]
-}
+//   Sections    Section[]
+// }
 
 model Teacher {
   id           Int        @id
   position     String?   
   employeeId   String     @unique
+  isActive     Boolean    @default(true)
   user         User?      @relation(fields: [id], references: [id], onDelete: Cascade)
 
-  Sections     Section[] 
-  Schedules    Schedule[]
-
-  departments  TeacherOnDepartments[] 
+  Sections     Section[]
+  departments  TeacherOnDepartments[]
+  subjectOnSections    SubjectonSections[]
 }
 
 model Department {
   id             Int       @id @default(autoincrement())
   name           String   
-  description    String?   
+  description    String?
 
   teachers      TeacherOnDepartments[] 
 }
@@ -87,33 +87,32 @@ model GovernmentProgram {
 }
 
 model Section {
-  id          Int       @id @default(autoincrement())
-  name        String    
-  yearLevel   Int       
-  strandID    Int?      
-  roomID      Int?      
-  adviserID   Int?      
-  strand      Strand?   @relation(fields: [strandID], references: [id], onDelete: SetNull)
+  id              Int       @id @default(autoincrement())
+  name            String    
+  yearLevel       Int
+  startSchoolYear Int
+  isActive        Boolean   @default(true)            
+  roomID          Int?      
+  adviserID       Int?
+  // strandID    Int?       
+  // strand      Strand?   @relation(fields: [strandID], references: [id], onDelete: SetNull)
   room        Room?     @relation(fields: [roomID], references: [id], onDelete: SetNull)
   teacher     Teacher?  @relation(fields: [adviserID], references: [id], onDelete: SetNull)
 
-  Students     Student[]
-  Schedules    Schedule[]
+  students     StudentOnSections[]
   subjects     SubjectonSections[]
-} 
+}
 
 model Student {
   id               Int       @id
   guardianName     String?   
   enrollmentDate   DateTime  @default(now())
-  sectionID        Int?      
-  strandID         Int?      
+  gradeLevel       Int            
   lrn              String    @unique
-  section          Section?  @relation(fields: [sectionID], references: [id], onDelete: SetNull)
-
   user             User      @relation(fields: [id], references: [id], onDelete: Cascade)
   grades           Grade[]
 
+  sections         StudentOnSections[]
   governmentPrograms StudentOnPrograms[]
 }
 
@@ -123,8 +122,6 @@ model Subject {
   description String?      
   gradeLevel  Int?       
 
-  Schedules   Schedule[]
-  Grade       Grade[]
   sections    SubjectonSections[]
 }
 
@@ -138,6 +135,16 @@ model TeacherOnDepartments {
   @@id([teacherId, departmentId])  
 }
 
+model StudentOnSections {
+  studentId    Int
+  sectionId    Int
+
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  section      Section    @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, sectionId]) 
+}
+
 model StudentOnPrograms {
   studentId    Int
   programId    Int
@@ -149,37 +156,39 @@ model StudentOnPrograms {
 }
 
 model SubjectonSections {
+  id          Int       @id @default(autoincrement())
   subjectId   Int
   sectionId   Int
+  teacherId   Int?
+  scheduleId  Int?
 
   subject     Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   section     Section      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  teacher     Teacher?      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  schedule    Schedule?     @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  grades      Grade[]       @relation(name: "SubjectonSectionsToGrade")
 
-  @@id([subjectId, sectionId])
+
+  @@unique([subjectId, sectionId])
 }
 
 model Schedule {
-  id         Int       @id @default(autoincrement())
-  subjectID  Int       
-  teacherID  Int?      
-  sectionID  Int       
+  id         Int       @id @default(autoincrement()) 
   dayOfWeek  String    
   startTime  DateTime
   endTime    DateTime
 
-  subject    Subject?  @relation(fields: [subjectID], references: [id], onDelete: Cascade)
-  teacher    Teacher?  @relation(fields: [teacherID], references: [id], onDelete: SetNull)
-  section    Section?  @relation(fields: [sectionID], references: [id], onDelete: Cascade)
+  subjectOnSections SubjectonSections[]
 }
 
 model Grade {
   id         Int       @id @default(autoincrement())
-  studentID  Int       
-  subjectID  Int       
-  term       String    
+  studentId  Int       
+  subjectId  Int          
   grade      Float     
   remarks    String?
 
-  student    Student?  @relation(fields: [studentID], references: [id], onDelete: Cascade)
-  subject    Subject?  @relation(fields: [subjectID], references: [id], onDelete: Cascade)
+  student    Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectOnSections     SubjectonSections  @relation(fields: [subjectId], references: [id], onDelete: Cascade, name: "SubjectonSectionsToGrade")
 }
+

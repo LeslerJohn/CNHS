@@ -6,22 +6,20 @@
 
 <aside>
     <nav>
+        <p class="text-sm font-bold mb-4">Student Information</p>
         <ul>
             <li aria-current={$page.url.pathname === '' ? 'page' : undefined}>
-                <a href="/student/profile">Profile</a>
-            </li>
-            <li aria-current={$page.url.pathname === '/grades' ? 'page' : undefined}>
-                <a href="/student/grades">Grades</a>
+                <a class="text-lg" href="/student/profile">Profile</a>
             </li>
             <li aria-current={$page.url.pathname.startsWith('/schedule') ? 'page' : undefined}>
-                <a href="/student/schedule">Schedule</a>
+                <a class="text-lg" href="/student/schedule">Schedule</a>
             </li>
-            <li aria-current={$page.url.pathname.startsWith('/subjects') ? 'page' : undefined}>
-                <a href="/student/subjects">Subjects</a>
+            <li aria-current={$page.url.pathname === '/grades' ? 'page' : undefined}>
+                <a class="text-lg" href="/student/grades">Grades</a>
             </li>
-            <li aria-current={$page.url.pathname.startsWith('/sport') ? 'page' : undefined}>
+            <!-- <li aria-current={$page.url.pathname.startsWith('/sport') ? 'page' : undefined}>
                 <a href="/student/sport">Sport</a>
-            </li>
+            </li> -->
         </ul>
     </nav>
     <div>
@@ -30,7 +28,7 @@
                 <a href="/">Help</a>
             </li>
             <li>
-                <a href="/">Logout</a>
+                <a href="/logout">Logout</a>
             </li>
         </ul>
     </div>
@@ -52,7 +50,7 @@
         background-color: #f1f1f1;
         padding: 20px;
         z-index: 1;
-        margin-top: 100px;
+        margin-top: 120px;
         margin-left: 50px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         border-radius: 8px;

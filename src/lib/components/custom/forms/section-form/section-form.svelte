@@ -6,19 +6,21 @@
 	import * as Select from '$lib/components/ui/select';
     import { Input } from '$lib/components/ui/input';
 	import { toast } from 'svelte-sonner';
+	import { Switch } from "$lib/components/ui/switch";
 
 	// Props for form data
 	export let data: SuperValidated<{
 		name: string;
 		yearLevel: number;
+		startSchoolYear: number;
+		isActive: boolean;
 		roomID?: number | null;
-		strandID?: number | null;
 		adviserID?: number | null;
 	}>;
 
 	// Props for available options
 	export let rooms: { id: number; roomNumber: string }[];
-	export let strands: { id: number; name: string }[];
+	// export let strands: { id: number; name: string }[];
 	export let advisers: { id: number; name: string }[];
 
 	// Initialize form
@@ -32,28 +34,33 @@
 		$formData.yearLevel = value;
 	}
 
+	function handleSchoolYearInput(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const value = target.valueAsNumber;
+		$formData.startSchoolYear = value;
+	}
+
 	const { form: formData, enhance } = form;
 
 	// Reactive variables for selected options
 	$: availableRooms = rooms.map(room => ({ value: room.id, label: room.roomNumber }));
-	$: availableStrands = strands.map(strand => ({ value: strand.id, label: strand.name }));
+	// $: availableStrands = strands.map(strand => ({ value: strand.id, label: strand.name }));
 	$: availableAdvisers = advisers.map(adviser => ({ value: adviser.id, label: adviser.name }));
 
 	$: selectedRoom = $formData.roomID
 		? availableRooms.find((room) => room.value === $formData.roomID)
 		: undefined;
-	$: selectedStrand = $formData.strandID
-		? availableStrands.find((strand) => strand.value === $formData.strandID)
-		: undefined;
+	// $: selectedStrand = $formData.strandID
+	// 	? availableStrands.find((strand) => strand.value === $formData.strandID)
+	// 	: undefined;
 	$: selectedAdviser = $formData.adviserID
 		? availableAdvisers.find((adviser) => adviser.value === $formData.adviserID)
 		: undefined;
 
 	// Handle yearLevel changes
-	$: strandVisible = $formData.yearLevel >= 11;
+	// $: strandVisible = $formData.yearLevel >= 11;
 </script>
 
-<SuperDebug data={formData}/>
 <form method="POST" use:enhance>
 	<Form.Field {form} name="name">
 		<Form.Control let:attrs>
@@ -67,6 +74,14 @@
 		<Form.Control let:attrs>
 			<Form.Label>Year Level</Form.Label>
 			<Input type="number" {...attrs} bind:value={$formData.yearLevel} on:input={handleYearLevelInput}/>
+		</Form.Control>
+		<Form.FieldErrors />
+	</Form.Field>
+
+	<Form.Field {form} name="startSchoolYear">
+		<Form.Control let:attrs>
+			<Form.Label>School Year Start</Form.Label>
+			<Input type="number" {...attrs} bind:value={$formData.startSchoolYear} on:input={handleSchoolYearInput}/>
 		</Form.Control>
 		<Form.FieldErrors />
 	</Form.Field>
@@ -94,7 +109,7 @@
 		<Form.FieldErrors />
 	</Form.Field>
 
-	{#if strandVisible}
+	<!-- {#if strandVisible}
 		<Form.Field {form} name="strandID">
 			<Form.Control let:attrs>
 				<Form.Label>Select Strand</Form.Label>
@@ -117,7 +132,7 @@
 			</Form.Control>
 			<Form.FieldErrors />
 		</Form.Field>
-	{/if}
+	{/if} -->
 
 	<Form.Field {form} name="adviserID">
 		<Form.Control let:attrs>
@@ -140,6 +155,26 @@
 			<input hidden bind:value={$formData.adviserID} name={attrs.name} />
 		</Form.Control>
 		<Form.FieldErrors />
+	</Form.Field>
+
+	<Form.Field
+	{form}
+	name="isActive"
+	class="flex flex-row items-center justify-between rounded-lg border p-4"
+>
+	<Form.Control let:attrs>
+		<div class="space-y-0.5">
+		<Form.Label>Active</Form.Label>
+		<Form.Description>
+			Is the section currently active.
+		</Form.Description>
+		</div>
+		<Switch
+			includeInput
+			{...attrs}
+			bind:checked={$formData.isActive}
+		/>
+	</Form.Control>
 	</Form.Field>
 
 	<Form.Button>Create Section</Form.Button>

@@ -1,19 +1,18 @@
 import { superValidate } from 'sveltekit-superforms';
 import { sectionFormSchema } from '$lib/components/custom/forms/section-form/schema';
 import { prisma } from '$lib/server/prisma';
-import { error } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { error, redirect } from '@sveltejs/kit';
+import { zod } from 'sveltekit-superforms/adapters';
+import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
-    const sectionId = Number(params.id);
+    const sectionId = parseInt(params.id);
 
     try {
-        // Fetch section data for editing
         const section = await prisma.section.findUnique({
             where: { id: sectionId },
             include: {
                 room: true,
-                strand: true,
                 teacher: {
                     include: { user: true }
                 }
@@ -22,22 +21,22 @@ export const load: PageServerLoad = async ({ params }) => {
 
         if (!section) throw new Error('Section not found');
 
-		 // Only pass the fields required by the form
 		const formData = {
             name: section.name,
             yearLevel: section.yearLevel,
+            startSchoolYear: section.startSchoolYear,
             roomID: section.room?.id || null,
-            strandID: section.strand?.id || null,
-            adviserID: section.teacher?.id || null
+            adviserID: section.teacher?.id || null,
+            isActive: section.isActive
         };
 
         // Pass the formData and schema into superValidate
-        const form = await superValidate(formData, sectionFormSchema);
+        const form = await superValidate(formData, zod(sectionFormSchema));
 
 
 
         const rooms = await prisma.room.findMany({ select: { id: true, roomNumber: true } });
-        const strands = await prisma.strand.findMany({ select: { id: true, name: true } });
+        // const strands = await prisma.strand.findMany({ select: { id: true, name: true } });
         const advisers = await prisma.teacher.findMany({
             select: {
                 id: true,
@@ -48,7 +47,6 @@ export const load: PageServerLoad = async ({ params }) => {
         return {
             form,
             rooms,
-            strands,
             advisers: advisers.map(adviser => ({
                 id: adviser.id,
                 name: adviser.user ? `${adviser.user.firstName} ${adviser.user.lastName}` : 'No Adviser'
@@ -57,5 +55,52 @@ export const load: PageServerLoad = async ({ params }) => {
     } catch (error) {
         console.error('Error fetching data:', error);
         throw new Error('Failed to load section data');
+    }
+};
+
+export const actions: Actions = {
+    default: async ({ request, params }) => {
+        const formData = Object.fromEntries(await request.formData());
+
+        console.log('formData.isActive before parsing:', formData.isActive);
+        
+        const parsedFormData = {
+            ...formData,
+            yearLevel: Number(formData.yearLevel),
+            startSchoolYear: Number(formData.startSchoolYear),
+            roomID: formData.roomID ? Number(formData.roomID) : null,
+            adviserID: formData.adviserID ? Number(formData.adviserID) : null,
+            isActive: formData.isActive ? true : false
+        };
+
+        console.log('Section Status:', parsedFormData.isActive);
+
+        const validation = sectionFormSchema.safeParse(parsedFormData);
+
+        if (!validation.success) {
+            return { form: validation.data, errors: validation.error };
+        }
+
+        const { name, yearLevel, startSchoolYear, isActive, roomID, adviserID } = validation.data;
+
+        try {
+            await prisma.section.update({
+                where: { id: parseInt(params.id) },
+                data: {
+                    name,
+                    yearLevel,
+                    startSchoolYear,
+                    isActive,
+                    roomID,
+                    adviserID
+                }
+            });
+
+        } catch (error) {
+            console.error('Error updating section:', error);
+            throw new Error('Failed to update section');
+        }
+
+        throw redirect(302, '../../');
     }
 };

@@ -7,13 +7,12 @@ import { fail, redirect } from '@sveltejs/kit';
 import { prisma } from '$lib/server/prisma';
 
 export const load: PageServerLoad = async ({ params }) => {
-	// Fetch the subject using the subjectId from params
 	const subjectId = parseInt(params.id);
 	const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
 
 	// Handle case where subject is not found
 	if (!subject) {
-		throw redirect(302, '/404'); // Redirect or show error page if the subject is not found
+		throw redirect(302, '/404');
 	}
 
 	
@@ -23,7 +22,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			{
 				name: subject.name ?? '',
 				description: subject.description ?? '',
-				yearLevel: subject.gradeLevel ?? 0 // Ensure the key matches the schema
+				yearLevel: subject.gradeLevel ?? 0
 			},
 			zod(subjectFormSchema)
 		)
@@ -40,7 +39,7 @@ export const actions: Actions = {
 			return fail(400, { form });
 		}
 
-		const subjectId = parseInt(params.id); // Get the subject ID from params
+		const subjectId = parseInt(params.id);
 
 		// Update the subject in the database
 		try {
@@ -49,11 +48,8 @@ export const actions: Actions = {
 				where: { id: subjectId }
 			});
 		} catch (error) {
-			// Handle error during the update
 			return fail(500, { message: 'Failed to update subject', form });
 		}
-
-		// Return redirect after successful update
 		throw redirect(302, `../`);
 	}
 };

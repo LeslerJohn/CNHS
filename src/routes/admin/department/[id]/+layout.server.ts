@@ -9,9 +9,29 @@ export const load: LayoutServerLoad = async ({ params }) => {
 		where: { id: departmentId }
 	});
 
+	const teachers = await prisma.teacherOnDepartments.findMany({
+		where: {
+			departmentId: departmentId
+		},
+		include: {
+			teacher: {
+				select: {
+					user: {
+						select: {
+							firstName: true,
+							middleName: true,
+							lastName: true
+						}
+					},
+					position: true
+				}
+			}
+		}
+	});
+
 	if (department === null) {
 		error(404, { message: 'Department not found' });
 	}
 
-	return { department };
+	return { department, teachers };
 };

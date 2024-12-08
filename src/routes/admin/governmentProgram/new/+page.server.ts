@@ -34,8 +34,6 @@ export const actions: Actions = {
                     description,
                 }
             });
-
-            throw redirect(302, `../`);
         } catch (err) {
             console.error(err);
             return {
@@ -43,5 +41,6 @@ export const actions: Actions = {
                 errors: { message: 'Error creating department' }
             };
         }
+        throw redirect(302, `./`);
     }
 };

@@ -3,49 +3,79 @@ import { redirect, fail } from '@sveltejs/kit';
 import { superValidate, type SuperValidated } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { formSchema } from '../../lib/components/custom/forms/login-form/schema';
-import { login } from '$lib/server/auth';
+import { lucia } from '$lib/server/auth.js';
 
 export const load: PageServerLoad = async () => {
-	return { form: await superValidate(zod(formSchema)), role : 'admin' };
-}
+	return { form: await superValidate(zod(formSchema)), role: 'admin' };
+};
 
 export const actions: Actions = {
-	default: async (event) => {
-		// Validate the form with proper typing
-		const form = await superValidate(event, zod(formSchema));
+	default: async ({ request, cookies }) => {
+		const form = await superValidate(request, zod(formSchema));
 
 		if (!form.valid) {
 			return fail(400, { form });
 		}
 
-		// Extract form data (username and password) properly typed
 		const { username, password } = form.data;
-		console.log('Attempting login with:', { username, password });
 
+		let role;
 		try {
-			// Call the login function and get the role
-			const role = await login(username, password);
-			console.log('Login successful, role:', role);
+			const user = await prisma.user.findFirst({
+				where: {
+					OR: [
+						{ email: username },
+						{ Teacher: { employeeId: username } },
+						{ Student: { lrn: username } }
+					]
+				},
+				include: {
+					Teacher: true,
+					Student: true
+				}
+			});
 
-
-			// Redirect based on the role
-			if (role === 'admin') {
-				console.log('Redirecting to admin...');
-				throw redirect(302, '/admin/dashboard');
-			} else if (role === 'teacher') {
-				console.log('Redirecting to teacher...')
-				throw redirect(302, '/teacher/dashboard');
-			} else if (role === 'student') {
-				console.log('Redirecting to student...')
-				throw redirect(302, '/student/dashboard');
+			if (!user) {
+				console.error('User not found');
+				throw new Error('Invalid login credentials');
 			}
 
-		} catch (error) {
-			// Handle login error
-			return fail(400, {
-				form,
-				error: 'Invalid login credentials'
+			console.log('User found:', user);
+
+			if (user.password !== password) {
+				console.error('Password mismatch');
+				throw new Error('Invalid login credentials');
+			}
+
+			const session = await lucia.createSession(user.id, []);
+			const sessionCookie = lucia.createSessionCookie(session.id);
+			cookies.set(sessionCookie.name, sessionCookie.value, {
+				path: '.',
+				...sessionCookie.attributes
 			});
+			console.log('Session created:', session);
+
+			if (user.isAdmin) {
+				role = 'admin';
+			} else if (user.Teacher) {
+				role = 'teacher';
+			} else if (user.Student) {
+				role = 'student';
+			}
+			console.log('Role detected:', role);
+
+		} catch (err) {
+			console.error('Error logging in:', err);
+			return fail(500, { message: 'Error logging in' });
+		}
+
+		if (role === 'admin') {
+			redirect(302, '/admin/dashboard');
+		} else if (role === 'teacher') {
+			redirect(302, '/teacher/dashboard');
+		} else if (role === 'student') {
+			console.log('Redirecting to student...');
+			redirect(302, '/student/profile');
 		}
 	}
 };

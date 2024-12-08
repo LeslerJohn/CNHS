@@ -7,16 +7,12 @@ import { fail, redirect } from '@sveltejs/kit';
 import { prisma } from '$lib/server/prisma';
 
 export const load: PageServerLoad = async ({ params }) => {
-	// Fetch the room using the roomId from params
 	const roomId = parseInt(params.id);
 	const room = await prisma.room.findUnique({ where: { id: roomId } });
 
-	// Handle case where room is not found
 	if (!room) {
-		throw redirect(302, '/404'); // Redirect or show error page if the room is not found
+		throw redirect(302, '/404'); 
 	}
-
-	
 
 	return {
 		form: await superValidate(
@@ -32,7 +28,6 @@ export const load: PageServerLoad = async ({ params }) => {
 
 export const actions: Actions = {
 	default: async ({ request, params }) => {
-		// Validate form data
 		const form = await superValidate(request, zod(roomFormSchema));
 
 		if (!form.valid) {
@@ -40,20 +35,17 @@ export const actions: Actions = {
 			return fail(400, { form });
 		}
 
-		const roomId = parseInt(params.id); // Get the room ID from params
+		const roomId = parseInt(params.id);
 
-		// Update the room in the database
 		try {
 			await prisma.room.update({
 				data: form.data,
 				where: { id: roomId }
 			});
 		} catch (error) {
-			// Handle error during the update
 			return fail(500, { message: 'Failed to update room', form });
 		}
 
-		// Return redirect after successful update
 		throw redirect(302, `../`);
 	}
 };

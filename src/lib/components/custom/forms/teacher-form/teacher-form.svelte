@@ -5,19 +5,30 @@
 	import { type SuperValidated, type Infer, superForm } from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
     import * as Select from '$lib/components/ui/select';
+    import { Switch } from "$lib/components/ui/switch";
 
-    export let data: SuperValidated<{ firstName: string; lastName: string; email: string; employeeId: string; dateOfBirth: string; gender: string; contactNumber: string; address: string; password: string; position?: string, departments?: Array<number>}>;
+    export let data: SuperValidated<{ firstName: string; middleName?: string; lastName: string; email: string; employeeId: string; dateOfBirth: string; gender: string; contactNumber: string; address: string; password: string; position?: string, departments?: Array<number>; isActive: boolean}>;
 
 	const form = superForm(data, {
 		validators: zodClient(teacherFormSchema)
 	});
 
-    // Props for available options
+    $: selectedGender = $formData.gender
+    ? {
+        value: $formData.gender,
+        label: $formData.gender
+    }
+    : undefined;
+    
+    const genders = [
+        { value: 'Male', label: 'Male' },
+        { value: 'Female', label: 'Female' },
+    ];
+
 	export let departments: { id: number; name: string }[];
 
 	const { form: formData, enhance } = form;
 
-    	// Reactive variable for available departments
 	$: availableDepartments = departments.map(dept => ({ value: dept.id, label: dept.name }));
 
     // Reactive variable for selected departments (multi-select)
@@ -33,6 +44,15 @@
             <Input {...attrs} bind:value={$formData.firstName} />
         </Form.Control>
         <Form.Description>First name of the teacher.</Form.Description>
+        <Form.FieldErrors />
+    </Form.Field>
+
+    <Form.Field {form} name="middleName">
+        <Form.Control let:attrs>
+            <Form.Label>Middle Name</Form.Label>
+            <Input {...attrs} bind:value={$formData.middleName} />
+        </Form.Control>
+        <Form.Description>Middle name of the teacher.</Form.Description>
         <Form.FieldErrors />
     </Form.Field>
 
@@ -75,9 +95,23 @@
     <Form.Field {form} name="gender">
         <Form.Control let:attrs>
             <Form.Label>Gender</Form.Label>
-            <Input {...attrs} bind:value={$formData.gender} />
+            <Select.Root
+                selected={selectedGender}
+                onSelectedChange={(v) => {
+                v && ($formData.gender = v.value);
+                }}
+            >
+            <Select.Trigger {...attrs}>
+                <Select.Value placeholder="Select Gender" />
+            </Select.Trigger>
+            <Select.Content>
+                {#each genders as gen}
+                <Select.Item value={gen.value} label={gen.label} />
+                {/each}
+            </Select.Content>
+            </Select.Root>
+            <input hidden bind:value={$formData.gender} name={attrs.name} />
         </Form.Control>
-        <Form.Description>Gender of the teacher.</Form.Description>
         <Form.FieldErrors />
     </Form.Field>
 
@@ -141,5 +175,24 @@
 		<Form.FieldErrors />
 	</Form.Field>
     
+    <Form.Field
+        {form}
+        name="isActive"
+        class="flex flex-row items-center justify-between rounded-lg border p-4"
+    >
+        <Form.Control let:attrs>
+            <div class="space-y-0.5">
+            <Form.Label>Active</Form.Label>
+            <Form.Description>
+                Is the tacher currently active.
+            </Form.Description>
+            </div>
+            <Switch
+                includeInput
+                {...attrs}
+                bind:checked={$formData.isActive}
+            />
+        </Form.Control>
+        </Form.Field>
     <Form.Button>Create Teacher</Form.Button>
 </form>

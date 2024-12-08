@@ -7,13 +7,9 @@ import { redirect, fail } from '@sveltejs/kit';
 
 const prisma = new PrismaClient();
 
-import type { PageServerLoad } from './$types';
-import { prisma } from '$lib/server/prisma';
-
 export const load: PageServerLoad = async ({ params }) => {
     const teacherId = parseInt(params.id);
 
-    // Fetch the teacher's details
     const teacher = await prisma.teacher.findFirst({
         where: { id: teacherId },
         include: {
@@ -32,33 +28,80 @@ export const load: PageServerLoad = async ({ params }) => {
             },
             departments: {
                 select: {
-                    id: true,
+                    department: {
+                        select: { id: true, name: true }
+                    }
                 }
             }
         }
     });
 
-    // Fetch the list of departments
-    const departments = await prisma.department.findMany();
+    const departments = await prisma.department.findMany({
+        select: { id: true, name: true }
+    });
 
-    // Map the teacher's departments to an array of department IDs
-    const departmentIds = teacher?.departments.map(department => department.id) || [];
+    const departmentIds = teacher?.departments.map((dept) => dept.department.id) || [];
 
-    // Prepare the data for the form
     const formData = {
-        firstName: teacher?.user.firstName || '',
-        lastName: teacher?.user.lastName || '',
-        middleName: teacher?.user.middleName || '',
-        email: teacher?.user.email || '',
+        firstName: teacher?.user?.firstName || '',
+        lastName: teacher?.user?.lastName || '',
+        middleName: teacher?.user?.middleName || '',
+        email: teacher?.user?.email || '',
         employeeId: teacher?.employeeId || '',
-        dateOfBirth: teacher?.user.dateOfBirth.toISOString().split('T')[0] || '',
-        gender: teacher?.user.gender || '',
-        contactNumber: teacher?.user.contactNumber || '',
-        address: teacher?.user.address || '',
-        password: teacher?.user.password || '',
+        dateOfBirth: teacher?.user?.dateOfBirth?.toISOString().split('T')[0] || '',
+        gender: teacher?.user?.gender || '',
+        contactNumber: teacher?.user?.contactNumber || '',
+        address: teacher?.user?.address || '',
+        password: teacher?.user?.password || '',
         position: teacher?.position || '',
-        departments: departmentIds
+        departments: departmentIds,
+        isActive: teacher?.isActive || false
     };
 
-    return { teacher: formData, departments };
+    const form = await superValidate(formData, zod(teacherFormSchema));
+
+    console.log(departments)
+    return { data: form, departments };
+};
+
+
+export const actions: Actions = {
+    default: async ({ request, params }) => {
+        // Validate form data with the teacherFormSchema
+        const form = await superValidate(request, zod(teacherFormSchema));
+
+        if (!form.valid) {
+            return fail(400, { form });
+        }
+
+        const teacherId = parseInt(params.id);
+
+        try {
+            await prisma.teacher.update({
+                data: {
+                    isActive: form.data.isActive,
+                    employeeId: form.data.employeeId,
+                    position: form.data.position,
+                    user: {
+                        update: {
+                            firstName: form.data.firstName,
+                            lastName: form.data.lastName,
+                            middleName: form.data.middleName,
+                            email: form.data.email,
+                            dateOfBirth: new Date(form.data.dateOfBirth),
+                            gender: form.data.gender,
+                            contactNumber: form.data.contactNumber,
+                            address: form.data.address,
+                            password: form.data.password,
+                        }
+                    }
+                },
+                where: { id: teacherId }
+            });
+        } catch (error) {
+            console.error("Error updating teacher:", error);
+            return fail(500, { message: 'Failed to update teacher', form });
+        }
+        throw redirect(302, '../');
+    }
 };

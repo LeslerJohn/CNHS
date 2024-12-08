@@ -6,25 +6,20 @@
 
 <aside>
     <nav>
+        <p class="text-sm font-bold mb-4">Teacher Information</p>
         <ul>
             <li aria-current={$page.url.pathname === '' ? 'page' : undefined}>
-                <a href="/admin/dashboard">Dashboard</a>
+                <a class="text-lg" href="/teacher/dashboard">Dashboard</a>
             </li>
-            <li aria-current={$page.url.pathname === '/teacher' ? 'page' : undefined}>
-                <a href="/admin/teacher">Teacher</a>
+            <li aria-current={$page.url.pathname === '/student' ? 'page' : undefined}>
+                <a class="text-lg" href="/teacher/student">Student</a>
             </li>
-            <li aria-current={$page.url.pathname.startsWith('/class') ? 'page' : undefined}>
-                <a href="/admin/class">Class</a>
+            <li aria-current={$page.url.pathname.startsWith('/grade') ? 'page' : undefined}>
+                <a class="text-lg" href="/teacher/grade">Grades</a>
             </li>
-            <li aria-current={$page.url.pathname.startsWith('/subject') ? 'page' : undefined}>
-                <a href="/admin/subject">Subject</a>
-            </li>
-            <li aria-current={$page.url.pathname.startsWith('/department') ? 'page' : undefined}>
-                <a href="/admin/department">Departments</a>
-            </li>
-            <li aria-current={$page.url.pathname.startsWith('/governmentProgram') ? 'page' : undefined}>
-                <a href="/admin/governmentProgram">Government Program</a>
-            </li>
+            <!-- <li aria-current={$page.url.pathname.startsWith('/sport') ? 'page' : undefined}>
+                <a href="/teacher/sport">Sports</a>
+            </li> -->
         </ul>
     </nav>
     <div>
@@ -33,20 +28,20 @@
                 <a href="/">Help</a>
             </li>
             <li>
-                <a href="/">Logout</a>
+                <a href="/logout">Logout</a>
             </li>
         </ul>
     </div>
 </aside>
 
 <section {id} >
-    <div class="flex flex-col flex-1 max-w-[1400px] mx-auto w-full">
+    <div class="flex flex-col flex-1 max-w-[1400px] mx-auto w-full mt-2">
         <slot />
     </div>
 </section>
 
 <style>
-        aside {
+    aside {
         position: fixed;
         top: 0;
         left: 0;
@@ -55,7 +50,7 @@
         background-color: #f1f1f1;
         padding: 20px;
         z-index: 1;
-        margin-top: 100px;
+        margin-top: 120px;
         margin-left: 50px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         border-radius: 8px;

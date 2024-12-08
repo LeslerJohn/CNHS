@@ -16,7 +16,6 @@ export const actions: Actions = {
         const description = formData.get('description')?.toString() || '';
         const gradeLevel = Number(formData.get('gradeLevel')) ?? 0;
 
-        // Validate form data using your schema
         const validation = subjectFormSchema.safeParse({ name, description, gradeLevel });
 
         if (!validation.success) {
@@ -28,7 +27,6 @@ export const actions: Actions = {
         }
 
         try {
-            // Create a new department in the database
             const subject = await prisma.subject.create({
                 data: {
                     name,
@@ -36,9 +34,6 @@ export const actions: Actions = {
                     gradeLevel,
                 }
             });
-
-            // Redirect to a new page or subject page after successful creation
-            redirect(302, `../`);
         } catch (err) {
             console.error(err);
             return {
@@ -46,5 +41,6 @@ export const actions: Actions = {
                 errors: { message: 'Error creating subject' }
             };
         }
+        throw redirect(302, `../`);
     }
 };

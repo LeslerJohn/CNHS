@@ -4,26 +4,13 @@
 
 <header>
 	<nav>
-		<svg viewBox="0 0 2 3" aria-hidden="true">
-			<path d="M0,0 L1,2 C1.5,3 1.5,3 2,3 L2,0 Z" />
-		</svg>
-		<ul>
-			<li aria-current={$page.url.pathname.startsWith('/login') ? 'page' : undefined}>
-                <a href="/login">Login</a>
-            </li>
-			<li aria-current={$page.url.pathname.startsWith('/admin/dashboard') ? 'page' : undefined}>
-                <a href="/admin/dashboard">Admin</a>
-            </li>
-			<li aria-current={$page.url.pathname.startsWith('/teacher/dashboard') ? 'page' : undefined}>
-                <a href="/teacher/dashboard">Teacher</a>
-            </li>
-			<li aria-current={$page.url.pathname.startsWith('/student/profile') ? 'page' : undefined}>
-                <a href="/student/profile">Student</a>
-            </li>
-		</ul>
-		<svg viewBox="0 0 2 3" aria-hidden="true">
-			<path d="M0,0 L0,3 C0.5,3 0.5,3 1,2 L2,0 Z" />
-		</svg>
+		<div class="p-4 ml-8 flex justify-left items-center bg-white w-screen flex-1">
+			<img src="/src/lib/images/concepcion.jpg" alt="Concepcion National High School" class="h-[86px]">
+			<div class="ml-4">
+				<h1 class="text-3xl font-bold">Concepcion National High School</h1>
+				<p class="text-4sm italic mt-1">Matarling Lantawan Basilan Province</p>
+			</div>
+		</div>
 	</nav>
 </header>
 
@@ -31,6 +18,7 @@
 	header {
 		display: flex;
 		justify-content: space-between;
+		z-index: 100;
 	}
 
 	.corner {

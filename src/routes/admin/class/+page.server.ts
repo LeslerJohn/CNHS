@@ -3,11 +3,9 @@ import type { PageServerLoad } from './$types';
 import { prisma } from '$lib/server/prisma';
 
 export const load: PageServerLoad = async () => {
-	const strands = await prisma.strand.findMany();
     const sections = await prisma.section.findMany({
         include: {
-          strand: true, // Include strand information
-          room: true,   // Include room information
+          room: true,
             teacher: {
             select: {
                 user: {
@@ -21,5 +19,5 @@ export const load: PageServerLoad = async () => {
         },
         });
 
-	return { strands, sections};
+	return {sections};
 };

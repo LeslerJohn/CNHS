@@ -16,7 +16,6 @@ export const actions: Actions = {
         const building = formData.get('building')?.toString() || '';
         const capacity = Number(formData.get('capacity')) ?? 0;
 
-        // Validate form data using your schema
         const validation = roomFormSchema.safeParse({ roomNumber, building, capacity });
 
         if (!validation.success) {
@@ -28,7 +27,6 @@ export const actions: Actions = {
         }
 
         try {
-            // Create a new department in the database
             const subject = await prisma.room.create({
                 data: {
                     roomNumber,
@@ -36,9 +34,6 @@ export const actions: Actions = {
                     capacity,
                 }
             });
-
-            // Redirect to a new page or subject page after successful creation
-            redirect(302, `../`);
         } catch (err) {
             console.error(err);
             return {
@@ -46,5 +41,6 @@ export const actions: Actions = {
                 errors: { message: 'Error creating subject' }
             };
         }
+        redirect(302, `./`);
     }
 };

@@ -35,8 +35,6 @@ export const actions: Actions = {
                 }
             });
 
-            // Redirect to a new page or strand page after successful creation
-            throw redirect(302, `../`);
         } catch (err) {
             console.error(err);
             return {
@@ -44,5 +42,7 @@ export const actions: Actions = {
                 errors: { message: 'Error creating strand' }
             };
         }
+
+        throw redirect(302, '../');
     }
 };

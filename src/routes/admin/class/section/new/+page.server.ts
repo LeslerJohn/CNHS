@@ -13,9 +13,9 @@ export const load = async () => {
 			select: { id: true, roomNumber: true }
 		});
 
-		const strands = await prisma.strand.findMany({
-			select: { id: true, name: true }
-		});
+		// const strands = await prisma.strand.findMany({
+		// 	select: { id: true, name: true }
+		// });
 
 		const advisers = await prisma.teacher.findMany({
 			select: {
@@ -32,7 +32,6 @@ export const load = async () => {
 		return {
             form,
 			rooms,
-			strands,
 			advisers: advisers.map((adviser) => ({
 				id: adviser.id,
 				name: adviser.user ? `${adviser.user.firstName} ${adviser.user.lastName}` : 'No Adviser Name'
@@ -52,9 +51,10 @@ export const actions = {
 		const parsedFormData = {
 			...formData,
 			yearLevel: Number(formData.yearLevel),
-			roomID: formData.roomID ? Number(formData.roomID) : null, // Convert to number or keep as null
-			strandID: formData.strandID ? Number(formData.strandID) : null, // Convert to number or keep as null
-			adviserID: formData.adviserID ? Number(formData.adviserID) : null // Convert to number or keep as null
+			startSchoolYear: Number(formData.startSchoolYear),
+			roomID: formData.roomID ? Number(formData.roomID) : null, 
+			adviserID: formData.adviserID ? Number(formData.adviserID) : null,
+			isActive: formData.isActive === 'true'
 		};
 
 		// Validate parsed form data
@@ -64,24 +64,24 @@ export const actions = {
 			return fail(400, { errors: validation.error.flatten() });
 		}
 
-		const { name, yearLevel, roomID, strandID, adviserID } = validation.data;
+		const { name, yearLevel, startSchoolYear, isActive, roomID, adviserID } = validation.data;
 
 		try {
-			// Create new section
 			await prisma.section.create({
 				data: {
 					name,
 					yearLevel,
+					startSchoolYear,
+					isActive,
 					roomID,
-					strandID,
 					adviserID
 				}
 			});
-
-            throw redirect(302, `../`);
 		} catch (error) {
 			console.error('Error creating section:', error);
 			return fail(500, { message: 'Unable to create section' });
 		}
+
+		throw redirect(302, `../`);
 	}
 };
